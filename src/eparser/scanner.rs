@@ -7,10 +7,7 @@ pub struct Scanner<'a> {
 }
 
 fn get_top(value: &str) -> char {
-    match value.chars().next() {
-        None => '\0',
-        Some(c) => c,
-    }
+    value.chars().next().unwrap_or('\0')
 }
 
 impl<'a> Scanner<'a> {
@@ -33,6 +30,12 @@ impl<'a> Scanner<'a> {
 
     pub fn position(&self) -> (usize, usize) {
         (self.position.0, self.position.1)
+    }
+
+    pub fn jump(&mut self, count: usize) {
+        for i in 0..count {
+            self.advance();
+        }
     }
 
     pub fn advance(&mut self) -> bool {

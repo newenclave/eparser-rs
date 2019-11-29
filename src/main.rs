@@ -8,6 +8,42 @@ enum Number {
     Floating(f64),
 }
 
+fn scan_ident(scan: &mut StrScanner, ending: &str) -> String {
+    let mut result = String::new();
+    while !scan.eol() && (scan.top().is_digit(10) || scan.top().is_ascii()) {
+        result.push(scan.top());
+        scan.advance();
+    }
+    return result;
+}
+
+fn scan_string(scan: &mut StrScanner, ending: &str) -> String {
+    let mut result = String::new();
+
+    while !scan.eol() {
+        if scan.get().starts_with(ending) {
+            scan.jump(ending.len());
+            break;
+        }
+        match scan.top() {
+            '\\' => {
+                scan.advance();
+                match scan.top() {
+                    'n' => result.push('\n'),
+                    'r' => result.push('\r'),
+                    't' => result.push('\t'),
+                    '\\' => result.push('\\'),
+                    val => { result.push('\\'); result.push(val) },
+                }
+            },
+            val => result.push(val),
+        }
+        scan.advance();
+    }
+
+    return result;
+}
+
 fn scan_number(scan: &mut StrScanner) -> Number {
 
     let mut d: i64 = 0;
@@ -77,13 +113,14 @@ fn scan_number(scan: &mut StrScanner) -> Number {
 
 fn main() {
     
-    let mut scan = eparser::scanner::Scanner::new("5.09er rt"); 
+    let mut scan = eparser::scanner::Scanner::new("wqeqw wqe qwe sdf\" 12312 "); 
     
-    let dig = scan_number(&mut scan);
+    let dig = scan_string(&mut scan, "\"");
 
-    match dig {
-        Number::Integer(d) => println!("int({})", d),
-        Number::Floating(f) => println!("float({})", f),
-    }
-    println!("resr: '{}'", scan.get())
+    // match dig {
+    //     Number::Integer(d) => println!("int({})", d),
+    //     Number::Floating(f) => println!("float({})", f),
+    // }
+    println!("res: '{}'", dig);
+    println!("rest: '{}'", scan.get())
 }

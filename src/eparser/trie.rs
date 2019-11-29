@@ -23,7 +23,7 @@ impl<T> Trie<T> {
         let other = data.backup();
 
         while !data.eol() {
-            let c = data.value();
+            let c = data.top();
             let next = root.children.get(&c);
             match next {
                 Some(expr) => {
@@ -36,9 +36,13 @@ impl<T> Trie<T> {
             }
             data.advance();
         }
+        
         return match last {
             Some(expr) => Some(expr),
-            None => { data.restore(&other); None }
+            None => { 
+                data.restore(&other); 
+                None 
+            }
         }
     }
 

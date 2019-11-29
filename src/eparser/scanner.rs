@@ -2,13 +2,23 @@
 
 pub struct Scanner<'a> {
     current: &'a str,
+    top: char,
     position: (usize, usize),
 }
 
+fn get_top(value: &str) -> char {
+    match value.chars().next() {
+        None => '\0',
+        Some(c) => c,
+    }
+}
+
 impl<'a> Scanner<'a> {
+
     pub fn new (value: &str) -> Scanner {
         Scanner {
             current: value,
+            top: get_top(value),
             position: (1, 1), 
         }
     }
@@ -17,12 +27,8 @@ impl<'a> Scanner<'a> {
         self.current
     }
 
-    pub fn value(&self) -> char {
-        if self.current.len() > 0 { 
-            let c: char = self.current.chars().nth(0).unwrap();
-            return c;
-        } 
-        return '\0';
+    pub fn top(&self) -> char {
+        self.top
     }
 
     pub fn position(&self) -> (usize, usize) {
@@ -31,8 +37,9 @@ impl<'a> Scanner<'a> {
 
     pub fn advance(&mut self) -> bool {
         if self.current.len() > 0 {
-            let c: char = self.current.chars().next().unwrap();
+            let c: char = self.top;
             self.current = &self.current[1..];
+            self.top = get_top(self.current);
             self.position = match c {
                 '\n' => (self.position.0 + 1, 1),
                   _  => (self.position.0, self.position.1 + 1),
@@ -49,12 +56,14 @@ impl<'a> Scanner<'a> {
     pub fn backup(&self) -> Scanner<'a> {
         return Scanner {
             current: self.current,
+            top: self.top,
             position: self.position
         }
     }
 
     pub fn restore<'b>(&mut self, other: &'b Scanner<'a> ) {
         self.current = other.current;
+        self.top = other.top;
         self.position = other.position;
     }
 }

@@ -143,7 +143,7 @@ fn is_ident(c: char) -> bool {
     return c.is_ascii_alphabetic() || c == '_';
 }
 
-fn scan_ident<'a, 'b>(scanner: &'a mut StrScanner<'b>) -> String {
+fn scan_ident(scanner: &mut StrScanner) -> String {
     let base = scanner.backup();
     let shift = scanner.advance_while(|c| { is_ident(c) || c.is_digit(10) });
     return String::from(&base.get()[0..shift])
@@ -199,7 +199,7 @@ fn skip_spaces(scanner: &mut StrScanner) {
 }
 
 impl<T> Lexer<T> where T: std::clone::Clone {
-    pub fn new () -> Lexer<T> {
+    pub fn new() -> Lexer<T> {
         Lexer {
             trie: Trie::new()
         }

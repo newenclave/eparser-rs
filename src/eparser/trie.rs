@@ -17,9 +17,11 @@ impl<T> Trie<T> {
         }
     }
 
-    pub fn get<'a, 'b>(&'a self, data: &'b mut StrScanner) -> Option<&T> {
+    pub fn get<'a, 'b>(&'a self, data: &'b mut StrScanner) -> Option<(&T, usize)> {
         let mut root = self;
         let mut last: Option<&T> = None;
+        let mut last_shift: usize = 0;
+        let mut shift: usize = 0;
         let other = data.backup();
 
         while !data.eol() {
@@ -29,16 +31,17 @@ impl<T> Trie<T> {
                 Some(expr) => {
                     root = &expr;
                     if !root.data.is_none() {
-                        last = root.value_ref()
+                        last = root.value_ref();
+                        last_shift = shift + c.len_utf8();
                     }
                 },
                 None => break,
             }
-            data.advance();
+            shift += data.advance();
         }
-        
+
         return match last {
-            Some(expr) => Some(expr),
+            Some(expr) => Some((expr, last_shift)),
             None => { 
                 data.restore(&other); 
                 None 

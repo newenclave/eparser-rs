@@ -3,9 +3,20 @@
 mod eparser;
 use eparser::scanner::Scanner as StrScanner;
 
-enum Number {
-    Integer(i64),
-    Floating(f64),
+
+fn skip_while(scan: &mut StrScanner, predic: fn(char) -> bool) {
+    while !scan.eol() && predic(scan.top()) {
+        scan.advance();
+    }
+}
+
+fn read_while(scan: &mut StrScanner, predic: fn(char) -> bool) -> String {
+    let mut result = String::new();
+    while !scan.eol() && predic(scan.top()) {
+        result.push(scan.top());
+        scan.advance();
+    }
+    return result;
 }
 
 fn scan_ident(scan: &mut StrScanner, ending: &str) -> String {
@@ -17,110 +28,42 @@ fn scan_ident(scan: &mut StrScanner, ending: &str) -> String {
     return result;
 }
 
-fn scan_string(scan: &mut StrScanner, ending: &str) -> String {
-    let mut result = String::new();
 
-    while !scan.eol() {
-        if scan.get().starts_with(ending) {
-            scan.jump(ending.len());
-            break;
-        }
-        match scan.top() {
-            '\\' => {
-                scan.advance();
-                match scan.top() {
-                    'n' => result.push('\n'),
-                    'r' => result.push('\r'),
-                    't' => result.push('\t'),
-                    '\\' => result.push('\\'),
-                    val => { result.push('\\'); result.push(val) },
-                }
-            },
-            val => result.push(val),
-        }
-        scan.advance();
-    }
 
-    return result;
+
+fn is_ident(c: char) -> bool {
+    return c.is_ascii_alphabetic() || c == '_';
 }
 
-fn scan_number(scan: &mut StrScanner) -> Number {
+fn is_ident_string_rest(data: &str) -> bool {
+    for c in data.chars() {
+        if !(c.is_digit(10) || is_ident(c)) {
+            return false;
+        } 
+    } 
+    return true;
+}
 
-    let mut d: i64 = 0;
-    let mut a: f64 = 0.0;
-    let mut e: i32 = 0;
-    
-    while !scan.eol() && scan.top().is_digit(10) {
-        let value = scan.top().to_digit(10).unwrap();
-        
-        d *= 10;
-        d += value as i64;
-
-        a *= 10.0;
-        a += value as f64;
-        scan.advance();
-    }
-
-    let mut found: bool = false;
-    let scan_bu = scan.backup(); 
-
-    if scan.top() == '.' {
-        scan.advance();
-        while !scan.eol() && scan.top().is_digit(10) {
-            found = true;
-            a *= 10.0;
-            a += scan.top().to_digit(10).unwrap() as f64;
-            e -= 1;
-            scan.advance();
-        }
-    }
-
-    if scan.top() == 'e' || scan.top() == 'E' {
-        let mut sign: i32 = 1;
-        let mut i: i32 = 0;
-        scan.advance();
-        match scan.top() {
-            '+' => { scan.advance(); },
-            '-' => { scan.advance(); sign = -1 },
-             _  => { }
-        }
-        while !scan.eol() && scan.top().is_digit(10) {
-            found = true;
-            i *= 10;
-            i += scan.top().to_digit(10).unwrap() as i32;
-            scan.advance();
-        }
-        e += i * sign;
-    }
-
-    while e > 0 {
-        a *= 10.0;
-        e -= 1;
-    }
-
-    while e < 0 {
-        a *= 0.1;
-        e += 1;
-    }
-
-    return if found {
-        Number::Floating(a)
-    } else {
-        scan.restore(&scan_bu);
-        Number::Integer(d)
-    }
+fn is_ident_string(data: &str) -> bool {
+    let top = match data.chars().next() {
+        Some(expr) => expr,
+        None => '\0',
+    };
+    return is_ident(top) && is_ident_string_rest(&data[top.len_utf8()..]);
 }
 
 fn main() {
     
-    let mut scan = eparser::scanner::Scanner::new("wqeqw wqe qwe sdf\" 12312 "); 
-    
-    let dig = scan_string(&mut scan, "\"");
+    let mut lex: eparser::lexer::Lexer<String> = eparser::lexer::Lexer::new();
 
-    // match dig {
-    //     Number::Integer(d) => println!("int({})", d),
-    //     Number::Floating(f) => println!("float({})", f),
-    // }
-    println!("res: '{}'", dig);
-    println!("rest: '{}'", scan.get())
+    let r = lex.run("123 k kkk k2 if if2 ident \nfloat \n90.188 \"and this \nis a string value\" ");
+
+    match r {
+        Err(expr) => println!("Fail! {}", expr),
+        Ok(v) => {
+            for i in v.iter() {
+                println!("{} @ {:?}", i.to_string(), i.position());
+            }
+        },
+    };
 }

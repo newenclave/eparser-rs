@@ -37,19 +37,26 @@ impl<'a> Scanner<'a> {
             self.advance();
         }
     }
-
-    pub fn advance(&mut self) -> bool {
+    pub fn advance_while(&mut self, predic: fn(char)->bool) -> usize {
+        let mut count: usize = 0;
+        while !self.eol() && predic(self.top()) {
+            count += self.advance();
+        }
+        return count;
+    }
+    pub fn advance(&mut self) -> usize {
         if self.current.len() > 0 {
             let c: char = self.top;
-            self.current = &self.current[1..];
+            let shift = c.len_utf8();
+            self.current = &self.current[shift..];
             self.top = get_top(self.current);
             self.position = match c {
                 '\n' => (self.position.0 + 1, 1),
                   _  => (self.position.0, self.position.1 + 1),
             };
-            return true;
+            return shift;
         } 
-        return false;
+        return 0;
     }
 
     pub fn eol(&self) -> bool {

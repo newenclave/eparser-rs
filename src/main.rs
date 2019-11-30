@@ -58,7 +58,7 @@ fn main() {
     float 
     90.188 
     \"and this \nis a string value\" 
-    test values 224.67 32.43 0.001");
+    test values 224.67 32.43 0.001 <>");
 
     match r {
         Err(expr) => println!("Fail! {}", expr),

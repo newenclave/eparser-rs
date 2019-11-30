@@ -47,7 +47,7 @@ struct TokenPack<T> {
     possible_ident: bool 
 }
 
-impl<T> TokenPack<T> where T: std::clone::Clone {
+impl<T> TokenPack<T> {
     fn new(val: T, ident: bool) -> TokenPack<T> {
         TokenPack {
             value: val,

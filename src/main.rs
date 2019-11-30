@@ -52,7 +52,9 @@ fn main() {
     
     let mut lex: eparser::lexer::Lexer<String> = eparser::lexer::Lexer::new();
 
-    let r = lex.run("123 k kkk k2 if if2 ident 
+    lex.add("hell", "HELL!".to_string());
+
+    let r = lex.run("hell hell_ 123 k kkk k2 if if2 ident 
     float 
     90.188 
     \"and this \nis a string value\" 

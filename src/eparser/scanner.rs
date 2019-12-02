@@ -20,7 +20,7 @@ impl<'a> Scanner<'a> {
         }
     }
 
-    pub fn get(&self) -> &str {
+    pub fn get(&self) -> &'a str {
         self.current
     }
 

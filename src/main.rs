@@ -2,65 +2,52 @@
 
 mod eparser;
 use eparser::scanner::Scanner as StrScanner;
+use eparser::parser::Parser as Parser;
 
-fn skip_while(scan: &mut StrScanner, predic: fn(char) -> bool) {
-    while !scan.eol() && predic(scan.top()) {
-        scan.advance();
+use std::any::Any;
+
+struct TestCalls<'f> {
+    calls: Vec<&'f dyn Fn(&'f mut TestCalls<'f>)>,
+}
+
+impl<'f> TestCalls<'f> {
+    fn new() -> TestCalls<'f> {
+        TestCalls {
+            calls: Vec::new()
+        }
     }
-}
-
-fn read_while(scan: &mut StrScanner, predic: fn(char) -> bool) -> String {
-    let mut result = String::new();
-    while !scan.eol() && predic(scan.top()) {
-        result.push(scan.top());
-        scan.advance();
+    fn add<'a, F: Fn(&'f mut TestCalls<'f>)>(&'a mut self, val: &'f F) {
+        self.calls.push(val);
     }
-    return result;
-}
 
-fn scan_ident(scan: &mut StrScanner, ending: &str) -> String {
-    let mut result = String::new();
-    while !scan.eol() && (scan.top().is_digit(10) || scan.top().is_ascii()) {
-        result.push(scan.top());
-        scan.advance();
+    fn call(&'f mut self) {
+        let tmp = self.calls.clone();
+        for c in tmp.iter() {
+            c(&mut self)
+        }
     }
-    return result;
-}
-
-fn is_ident(c: char) -> bool {
-    return c.is_ascii_alphabetic() || c == '_';
-}
-
-fn is_ident_string_rest(data: &str) -> bool {
-    for c in data.chars() {
-        if !(c.is_digit(10) || is_ident(c)) {
-            return false;
-        } 
-    } 
-    return true;
-}
-
-fn is_ident_string(data: &str) -> bool {
-    let top = match data.chars().next() {
-        Some(expr) => expr,
-        None => '\0',
-    };
-    return is_ident(top) && is_ident_string_rest(&data[top.len_utf8()..]);
 }
 
 fn main() {
     
     let mut lex: eparser::lexer::Lexer<String> = eparser::lexer::Lexer::new();
+    let mut tc = TestCalls::new();
+
+    tc.add(&|_: &mut TestCalls| { print!("Hello") });
+    // tc.add(&|_: &TestCalls| { print!(", ") });
+    // tc.add(&|_: &TestCalls| { println!("world!") });
+
+    tc.call();
 
     lex.add("hell", "HELL!".to_string());
 
     let r = lex.run("hell hell_ 123 k kkk k2 if if2 ident 
     float 
     90.188 
-    \"and this \nis a string value\" 
-    test values 224.67 32.43 0.001 <>");
+    \"and this \nis a < string value\" 
+    test values 224.67 322342.43 0.001");
 
-    match r {
+    match &r {
         Err(expr) => println!("Fail! {}", expr),
         Ok(v) => {
             for i in v.iter() {
@@ -68,4 +55,6 @@ fn main() {
             }
         },
     };
+
+    let mut par: Parser<String, String> = Parser::new(r.unwrap());
 }

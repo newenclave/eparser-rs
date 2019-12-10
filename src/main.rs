@@ -7,7 +7,7 @@ use eparser::parser::Parser as Parser;
 use std::any::Any;
 
 struct TestCalls<'f> {
-    calls: Vec<&'f dyn Fn(&'f mut TestCalls<'f>)>,
+    calls: Vec<&'f dyn Fn(&mut TestCalls)>,
 }
 
 impl<'f> TestCalls<'f> {
@@ -16,14 +16,14 @@ impl<'f> TestCalls<'f> {
             calls: Vec::new()
         }
     }
-    fn add<'a, F: Fn(&'f mut TestCalls<'f>)>(&'a mut self, val: &'f F) {
+    fn add<F: Fn(&mut TestCalls)>(&mut self, val: &'f F) {
         self.calls.push(val);
     }
 
-    fn call(&'f mut self) {
+    fn call(&mut self) {
         let tmp = self.calls.clone();
         for c in tmp.iter() {
-            c(&mut self)
+            c(self)
         }
     }
 }
@@ -34,10 +34,15 @@ fn main() {
     let mut tc = TestCalls::new();
 
     tc.add(&|_: &mut TestCalls| { print!("Hello") });
-    // tc.add(&|_: &TestCalls| { print!(", ") });
-    // tc.add(&|_: &TestCalls| { println!("world!") });
-
+    tc.add(&|_: &mut TestCalls| { print!(", ") });
+    tc.add(&|_: &mut TestCalls| { println!("world!") });
     tc.call();
+
+    // let cop = tc.calls.clone();
+
+    // for i in cop.iter() {
+    //     i(&mut tc)
+    // }
 
     lex.add("hell", "HELL!".to_string());
 
